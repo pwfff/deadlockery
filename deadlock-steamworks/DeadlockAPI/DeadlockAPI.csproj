@@ -9,7 +9,10 @@
   <ItemGroup>
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="Snappier" Version="1.1.6" />
-    <PackageReference Include="SteamKit2" Version="2.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SteamKit\SteamKit2\SteamKit2\SteamKit2.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 ﻿using DeadlockAPI;
-using ouwou.GC.Deadlock.Internal;
 using SharpCompress.Compressors.BZip2;
 using SteamKit2;
+using SteamKit2.GC.Deadlock.Internal;
 
 namespace deadlockery
 {
@@ -72,10 +72,11 @@ namespace deadlockery
         private static async void OnWelcome(object? sender, DeadlockClient.ClientWelcomeEventArgs e)
         {
             //GetMatchMetaDataExample(testMatchId);
+            //var matches = await client.GetMatchHistory();
             var matches = await client.GetActiveMatches();
-            foreach (var match in matches?.active_matches!) {
+            foreach (var match in matches?.active_matches) {
                 Console.WriteLine($"Cool stuff {match.match_id}");
-                
+
                 var metadata = await client.GetMatchMetaData((uint)match.match_id);
                 if (metadata != null)
                 {

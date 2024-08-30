@@ -1,8 +1,8 @@
-﻿using ouwou.GC.Deadlock.Internal;
-using QRCoder;
+﻿using QRCoder;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.GC;
+using SteamKit2.GC.Deadlock.Internal;
 using SteamKit2.Internal;
 
 namespace DeadlockAPI {
@@ -174,6 +174,7 @@ namespace DeadlockAPI {
             msg.Body.match_id = matchId;
             var r = await SendAndReceiveWithJob<CMsgClientToGCGetMatchMetaData, CMsgClientToGCGetMatchMetaDataResponse>(msg);
             if (r == null) return null;
+            Console.WriteLine($"r {r} r.Result {r.result} r.replay_salt {r.replay_salt}");
             return new MatchMetaData() {
                 Data = r,
                 ReplayURL = $"http://replay{r.cluster_id}.valve.net/{APPID}/{matchId}_{r.replay_salt}.dem.bz2",
@@ -181,17 +182,17 @@ namespace DeadlockAPI {
             };
         }
 
-        public async Task<CMsgClientToGCGetGlobalMatchHistoryResponse?> GetGlobalMatchHistory(uint cursor = 0) {
-            var msg = new ClientGCMsgProtobuf<CMsgClientToGCGetGlobalMatchHistory>((uint)EGCCitadelClientMessages.k_EMsgClientToGCGetGlobalMatchHistory);
-            msg.Body.cursor = cursor;
-            return await SendAndReceiveWithJob<CMsgClientToGCGetGlobalMatchHistory, CMsgClientToGCGetGlobalMatchHistoryResponse>(msg);
-        }
-
         public async Task<CMsgClientToGCSpectateLobbyResponse?> SpectateLobby(ulong lobbyId) {
             var msg = new ClientGCMsgProtobuf<CMsgClientToGCSpectateLobby>((uint)EGCCitadelClientMessages.k_EMsgClientToGCSpectateLobby);
             msg.Body.lobby_id = lobbyId;
             msg.Body.client_version = clientVersion;
             return await SendAndReceiveWithJob<CMsgClientToGCSpectateLobby, CMsgClientToGCSpectateLobbyResponse>(msg);
+        }
+
+        public async Task<CMsgClientToGCGetMatchHistoryResponse?> GetMatchHistory() {
+            var msg = new ClientGCMsgProtobuf<CMsgClientToGCGetMatchHistory>((uint)EGCCitadelClientMessages.k_EMsgClientToGCGetMatchHistory);
+            msg.Body.account_id = user.SteamID.AccountID;
+            return await SendAndReceiveWithJob<CMsgClientToGCGetMatchHistory, CMsgClientToGCGetMatchHistoryResponse>(msg);
         }
 
         public async Task<CMsgClientToGCGetActiveMatchesResponse?> GetActiveMatches() {

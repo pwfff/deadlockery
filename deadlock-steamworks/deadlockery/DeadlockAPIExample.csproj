@@ -10,11 +10,14 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SharpCompress" Version="0.37.2" />
-    <PackageReference Include="SteamKit2" Version="2.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\DeadlockAPI\DeadlockAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SteamKit\SteamKit2\SteamKit2\SteamKit2.csproj" />
   </ItemGroup>
 
 </Project>

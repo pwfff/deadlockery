@@ -1,7 +1,6 @@
 ﻿using DeadlockAPI;
 using GenHTTP.Engine;
 using GenHTTP.Modules.Functional;
-using ouwou.GC.Deadlock.Internal;
 
 namespace DeadlockMatchInfoServer
 {
