@@ -1,4 +1,5 @@
 ﻿using ouwou.GC.Deadlock.Internal;
+using QRCoder;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.GC;
@@ -13,24 +14,23 @@ namespace DeadlockAPI {
 
         CallbackManager callbackMgr;
 
-        string userName;
-        string password;
-        string previouslyStoredGuardData;
-
+        string? lastUsername;
+        string? lastToken;
         bool disconnecting = false;
 
         const int APPID = 1422450;
 
         uint clientVersion = 0;
 
-        public DeadlockClient(string userName, string password) {
-            this.userName = userName;
-            this.password = password;
+        public DeadlockClient() {
+            DebugLog.AddListener(new SimpleConsoleDebugListener());
+            DebugLog.Enabled = true;
 
             client = new SteamClient();
+            client.DebugNetworkListener = new NetHookNetworkListener();
 
-            user = client.GetHandler<SteamUser>();
-            gameCoordinator = client.GetHandler<SteamGameCoordinator>();
+            user = client.GetHandler<SteamUser>()!;
+            gameCoordinator = client.GetHandler<SteamGameCoordinator>()!;
 
             callbackMgr = new CallbackManager(client);
             callbackMgr.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
@@ -38,8 +38,12 @@ namespace DeadlockAPI {
             callbackMgr.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
             callbackMgr.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
 
-            if (File.Exists("guard.txt")) {
-                previouslyStoredGuardData = File.ReadAllText("guard.txt");
+            if (File.Exists(".username")) {
+                 this.lastUsername = File.ReadAllText(".username");
+            }
+
+            if (File.Exists(".token")) {
+                 this.lastToken = File.ReadAllText(".token");
             }
         }
 
@@ -67,24 +71,34 @@ namespace DeadlockAPI {
         }
 
         async void OnConnected(SteamClient.ConnectedCallback callback) {
-            Console.WriteLine("Connected! Logging into Steam as {0}", userName);
+            Console.WriteLine("Connected to Steam");
 
-            var authSession = await client.Authentication.BeginAuthSessionViaCredentialsAsync(new AuthSessionDetails {
-                Username = userName,
-                Password = password,
-                IsPersistentSession = true,
-                GuardData = previouslyStoredGuardData,
-                Authenticator = new UserConsoleAuthenticator(),
-            });
-            var pollResponse = await authSession.PollingWaitForResultAsync();
-            if (pollResponse.NewGuardData != null) {
-                previouslyStoredGuardData = pollResponse.NewGuardData;
-                File.WriteAllText("guard.txt", previouslyStoredGuardData);
+            if (lastToken == null || lastUsername == null) {
+                var authSession = await client.Authentication.BeginAuthSessionViaQRAsync(new AuthSessionDetails());
+
+                authSession.ChallengeURLChanged = () =>
+                {
+                    Console.WriteLine("Steam has refreshed the challenge url");
+
+                    DrawQRCode(authSession);
+                };
+                
+                DrawQRCode(authSession);
+
+                var pollResponse = await authSession.PollingWaitForResultAsync();
+                lastUsername = pollResponse.AccountName;
+                lastToken = pollResponse.RefreshToken;
+
+                File.WriteAllText(".username", lastUsername);
+                File.WriteAllText(".token", lastToken);
             }
-            user.LogOn(new SteamUser.LogOnDetails {
-                Username = pollResponse.AccountName,
-                AccessToken = pollResponse.RefreshToken,
-                ShouldRememberPassword = true,
+            
+            Console.WriteLine($"Logging in as '{lastUsername}'...");
+            
+            user?.LogOn(new SteamUser.LogOnDetails
+            {
+                Username = lastUsername,
+                AccessToken = lastToken,
             });
         }
 
@@ -206,6 +220,21 @@ namespace DeadlockAPI {
         void OnDevPlaytestStatus(IPacketGCMsg packetMsg) {
             var msg = new ClientGCMsgProtobuf<CMsgGCToClientDevPlaytestStatus>(packetMsg);
             DevPlaytestStatusEvent?.Invoke(this, new DevPlaytestStatusEventArgs() { Data = msg.Body });
+        }
+
+        void DrawQRCode( QrAuthSession authSession )
+        {
+            Console.WriteLine( $"Challenge URL: {authSession.ChallengeURL}" );
+            Console.WriteLine();
+
+            // Encode the link as a QR code
+            using var qrGenerator = new QRCodeGenerator();
+            var qrCodeData = qrGenerator.CreateQrCode( authSession.ChallengeURL, QRCodeGenerator.ECCLevel.L );
+            using var qrCode = new AsciiQRCode( qrCodeData );
+            var qrCodeAsAsciiArt = qrCode.GetGraphic( 1, drawQuietZones: false );
+
+            Console.WriteLine( "Use the Steam Mobile App to sign in via QR code:" );
+            Console.WriteLine( qrCodeAsAsciiArt );
         }
     }
 }

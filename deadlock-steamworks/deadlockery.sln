@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeadlockAPI", "DeadlockAPI\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeadlockMatchInfoServer", "DeadlockMatchInfoServer\DeadlockMatchInfoServer.csproj", "{84ABE640-EC2C-49C4-8A0C-977780D9D79F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeadlockMatchScraper", "DeadlockMatchScraper\DeadlockMatchScraper.csproj", "{D8947AE8-9655-4B84-B8F8-170EB706006F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

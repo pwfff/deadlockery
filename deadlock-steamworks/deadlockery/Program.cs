@@ -1,7 +1,6 @@
 ﻿using DeadlockAPI;
 using ouwou.GC.Deadlock.Internal;
 using SharpCompress.Compressors.BZip2;
-using SharpCompress.Readers;
 using SteamKit2;
 
 namespace deadlockery
@@ -14,14 +13,7 @@ namespace deadlockery
 
         public static void Main(string[] args)
         {
-            if (args.Length < 3)
-            {
-                Console.WriteLine($"Usage: {AppDomain.CurrentDomain.FriendlyName} <steam username> <steam password> <match id>");
-                return;
-            }
-
-            client = new DeadlockClient(args[0], args[1]);
-            uint.TryParse(args[2], out testMatchId);
+            client = new DeadlockClient();
 
             client.ClientWelcomeEvent += OnWelcome;
 
@@ -79,7 +71,17 @@ namespace deadlockery
 
         private static async void OnWelcome(object? sender, DeadlockClient.ClientWelcomeEventArgs e)
         {
-            GetMatchMetaDataExample(testMatchId);
+            //GetMatchMetaDataExample(testMatchId);
+            var matches = await client.GetActiveMatches();
+            foreach (var match in matches?.active_matches!) {
+                Console.WriteLine($"Cool stuff {match.match_id}");
+                
+                var metadata = await client.GetMatchMetaData((uint)match.match_id);
+                if (metadata != null)
+                {
+                    Console.WriteLine($"Demo URL: {metadata.ReplayURL}\nMeta URL: {metadata.MetadataURL}\n");
+                }
+            }
         }
     }
 }
